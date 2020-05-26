@@ -1,0 +1,69 @@
+---
+title: "04-20-In-class exercises-2"
+author: "TJLee"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: 2test
+    highlight: github
+
+---
+```{r}
+
+##load &  see
+data <- read.table("/Users/Tjlee/Desktop/weather/langMathDutch.txt", header = T)
+
+head(data)
+
+##classified IQ
+quantile(data$IQV,seq(0, 1, 1/3))
+
+classIQ <- with(data, cut(IQV, ordered=T, breaks=c(0, 11, 12.5, 18), labels=c("Low", "Middle","High")))
+newdta <- cbind(data,classIQ)
+head(newdta)
+
+##classified size
+quantile(data$size,seq(0, 1, 1/3))
+classsize <- with(data, cut(size, ordered=T, breaks=c(0, 20, 27, 37), labels=c("Small", "Medium", "Large")))
+
+ndata <- cbind(newdta,classsize)
+head(ndata)
+##cbind classsize&classIQ  (use , split)
+IQsize <- with(ndata,paste(classsize,classIQ,sep = ","))
+head(IQsize)
+resultdata <- cbind(ndata,IQsize)
+head(resultdata)
+
+##draw plot (lecture note p25)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+p1 <- ggplot(resultdata, 
+             aes(lang, arith,color=IQsize)) +
+  geom_point(size=rel(.5), 
+             alpha=.5) +
+  stat_smooth(method="lm", 
+              formula=y ~ x,
+              se=F,
+              col='gray') +
+  facet_wrap(~ IQsize) +
+  labs(x="Language score", y="Arithmetic score") +
+  theme_bw() 
+
+p1
+
+p2 <-  ggplot(resultdata, 
+             aes(lang, arith)) +
+  geom_point(size=rel(1),#點#透明度
+             alpha=1) +
+  stat_smooth(method="lm", #線性
+              formula=y ~ x,
+              se=T,     ##陰影部分
+              col='blue') +
+  facet_wrap(~ IQsize) + #依照IQsize排列
+  labs(x="Language score", y="Arithmetic score") +
+  theme_bw() 
+p2
+
+#The order are different from exercise plot
