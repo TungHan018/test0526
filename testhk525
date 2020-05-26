@@ -1,0 +1,394 @@
+---
+title: "hk0518_Dates & Times and Maps"
+author: "Tung-Han Wu"
+date: "2020/5/18"
+output: 
+  html_document: 
+    toc: true
+    toc_depth: 2
+    toc_float:
+        collapsed: false
+        smooth_scroll: false
+
+---
+
+# Dates & Times
+
+## In-class exercises 1
+*
+方法一
+```{r}
+db_TH <- as.Date("2018/9/1")
+de_TH <- as.Date("2020/5/18")
+```
+
+```{r}
+as.numeric(difftime(de_TH, db_TH, unit="days")) 
+```
+*
+方法二
+```{r}
+Sys.Date() - as.Date('2018-09-01')
+```
+#參考傑恩同學
+
+*
+方法三
+```{r}
+library(lubridate)
+startDate <- dmy("1-September-2018")
+endDate <- dmy("18-May-2020")
+endDate - startDate
+```
+
+```{r}
+as.period(startDate %--% endDate)
+```
+
+
+## In-class exercises 2
+
+#資料匯入、檢視資料
+```{r}
+dta <- read.table("/Users/User/Desktop/DM_R/hk0518/calls_nyc.csv", sep="," , header=T , stringsAsFactor=F, fill=T )
+dim(dta)
+str(dta)
+```
+
+#查看data類型:class()、變項名稱:name()為何
+```{r}
+class(dta)
+names(dta)
+View(dta)
+```
+
+
+*
+
+後續過程尚未完成
+
+```{r eval=FALSE, include=FALSE}
+rt <- data.frame(HOUR=factor(Hour, 
+                              levels=Hour),
+                 CALLS=apply(dta[, -1], 2, 
+                            mean, na.rm=T))
+ggplot(rt, aes(HOUR, 
+               CALLS, 
+               group=1)) +
+ geom_bar(width=1, 
+          stat="identity", 
+          fill="cyan", 
+          col="gray", 
+          alpha=0.2) +
+ geom_abline(intercept=mean(rt$Calls), 
+             slope=0, 
+             col="pink") +
+ coord_polar(theta="x", 
+             start=-pi/12) +
+ theme_ipsum()
+```
+
+## In-class exercises 3
+
+```{r}
+db_TH <- as.Date("2000/5/24")
+dd_TH <- as.Date("2100/5/24")
+
+bDays <- seq(from=db_TH, to=dd_TH, by="years")
+
+data <-data.frame(table(weekdays(bDays)))
+library(tidyverse)
+```
+
+*
+檢查 weekdays function 的結果
+```{r}
+weekdays(bDays)
+```
+
+
+
+```{r}
+names(data) <- c("weekdays", "Freq")
+ 
+# plot
+ggplot(data, aes(x=weekdays, y=Freq)) +
+  geom_segment( aes(x=weekdays, xend=weekdays, y=0, yend=Freq)) +
+  geom_point( size=2, color="green", fill=alpha("blue", 0.3), alpha=0.7, shape=21, stroke=4) 
+```
+
+## In-class exercises 4
+
+```{r}
+dta <- read.table("/Users/User/Desktop/DM_R/hk0518/birth_college.txt", header=T , stringsAsFactor=F, fill=T )
+dim(dta)
+str(dta)
+```
+
+#查看data類型:class()、變項名稱:name()為何
+```{r}
+class(dta)
+names(dta)
+head(dta)
+```
+
+```{r}
+dta$year <- c(1981:2009)
+head(dta)
+```
+
+
+```{r}
+par(mar = c(5, 5, 2, 5))
+plot(dta$year, dta$Birth, ylim = c(0, 60), 
+     xlab = "Year", ylab = "Birth rate (0.1%)")
+
+par(new = TRUE)
+plot(dta$year, dta$Entrance, ylim = c(40, 100), pch = 16,xaxt = "n", yaxt = "n", xlab = "", ylab = "")     
+                                                        # xaxt = "n", yaxt = "n" 用來移除其預設在左側的y軸座標
+axis(4, ylim = c(40,100))                               # 加上一 y 軸，2 是左邊， 4 是右邊
+mtext("Acceptance rate (%)", side = 4, line = 3)        # line = 3 用來調整右側 y 軸名稱的位置，數字愈小愈靠近座標軸
+
+legend("topleft", c("Birth", "College"), pch = c(1, 16)) # 圖例
+
+grid(nx = 30, ny = 0, col = "lightgray", lty = "dotted") # 背景格線
+
+```
+
+*
+學習from銘姿同學
+
+
+## exercises 1
+
+```{r}
+dta <- read.csv("/Users/User/Desktop/DM_R/hk0518/nz_visitors.csv", header = TRUE)
+dim(dta)
+str(dta)
+```
+
+#查看data類型:class()、變項名稱:name()為何
+```{r}
+class(dta)
+names(dta)
+head(dta)
+```
+
+```{r}
+dta <- dta %>%
+  dplyr::mutate(Year = as.integer(substr(Month, 1, 4)), 
+         Month = as.integer(substr(Month, 6, 7)), 
+         Season = (Month - 1) %/% 3 + 1) 
+head(dta)
+```
+
+
+```{r}
+dta <- dta %>%
+  tidyr::gather(key = "Country", value = "Visitors", 2:9)   #gather有待明白~~~!!?
+
+head(dta)
+```
+
+
+```{r}
+dta <- dta %>% 
+  dplyr::group_by(Country, Month) %>% 
+  dplyr::summarize(Visitor = mean(Visitors))
+
+head(dta)
+```
+
+
+```{r}
+ggplot()+
+  # 春天
+  geom_rect(data=data.frame(xstart=2.5, xend=5.5),
+           aes(xmin=xstart, xmax=xend, ymin=-Inf, ymax=Inf), 
+           fill='pink',
+           alpha=.2) +
+  # 夏天
+  geom_rect(data=data.frame(xstart=5.5, xend=8.5),
+           aes(xmin=xstart, xmax=xend, ymin=-Inf, ymax=Inf), 
+           fill='green',
+           alpha=.2) + 
+  # 秋天
+  geom_rect(data=data.frame(xstart=8.5, xend=11.5),
+           aes(xmin=xstart, xmax=xend, ymin=-Inf, ymax=Inf), 
+           fill='orange',
+           alpha=.2) +
+  geom_line(data = dta, aes(x = Month, y = Visitor, color = Country))+
+  scale_x_continuous(limits = c(1, 12), breaks = c(1, 4, 8, 12))+
+  theme_classic()
+```
+
+*
+學習from銘姿同學
+
+## exercises 2
+
+```{r}
+dta <- read.table("/Users/User/Desktop/DM_R/hk0518/nobel_lspan.txt", header = TRUE)
+str(dta)
+```
+
+
+#查看data類型:class()、變項名稱:name()為何
+```{r}
+class(dta)
+names(dta)
+head(dta)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(ggalt)
+library(tidyr)
+library(hrbrthemes)
+library(tidyverse)
+library(lattice)
+library(magrittr)
+library(lubridate)
+```
+
+*
+參考凱揚同學
+
+  語法關聯magrittr→mutate,lubridate→mdy,ggalt、ggplot2→geom_dumbbell
+
+  dta <- read.table("nobel_lspan.txt", h=T) %>%
+
+  mutate(born=mdy(Born),died=mdy(Died),span=died %--% born) 
+
+
+```{r}
+dta$born <- mdy(dta$Born)
+dta$died <- mdy(dta$Died)
+dta$span <- dta$died %--% dta$born 
+head(dta)
+```
+
+
+```{r}
+ggplot(dta, aes(reorder(ID, died),  x = born, xend = died)) +
+ geom_dumbbell(size=rel(1.1), 
+               colour="gold", 
+               colour_x="goldenrod",
+               colour_xend="goldenrod", 
+               dot_guide=TRUE, 
+               dot_guide_size=0.2) +
+ labs(x="Year", y=NULL) + 
+ theme_ipsum()
+```
+
+
+```{r}
+dta$age <- as.numeric(difftime(dta$died, dta$born, unit="days")) / 365    #difftime函式——計算時差   #as.numeric() 轉換成數值
+mean(dta$age)
+```
+
+*
+學習from銘姿同學
+
+```{r}
+#平均壽命
+dta%>% summarise(meanlife=mean((died - born)/365))
+```
+*
+學習from唐榮同學
+
+## exercises 3
+
+*
+Use the following sample of records for profit made, arrival date, and departure date of group travel booked at a travel agency in Taiwan to estimate the mean profit per day of service.
+
+```{r}
+dta <- read.csv("/Users/User/Desktop/DM_R/hk0518/Visit_TW.csv", header =TRUE )
+str(dta)
+```
+
+#查看data類型:class()、變項名稱:name()、前六項資料：head()為何
+```{r}
+class(dta)
+names(dta)
+head(dta)
+```
+
+```{r}
+dta$Arrival <- as.Date(dta$Arrival)
+dta$Depature <- as.Date(dta$Depature)
+dta$duration <- as.numeric(difftime(dta$Depature, dta$Arrival, unit="days"))+1
+str(dta)
+```
+
+
+```{r}
+profit <- data.frame(All_profit <- sum(dta$Expense), 
+                     Total_stay_duration <- sum(dta$duration), 
+                     Mean_profit <- All_profit/Total_stay_duration)
+names(profit) <- c("All profit", "Total stay duration", "Mean profit")
+
+knitr::kable(profit)
+```
+
+*
+學習from銘姿同學
+
+
+
+
+
+
+# Maps
+```{r}
+library(leaflet)
+m <- leaflet() %>%
+ addTiles() %>%  
+ addMarkers(lng=120.219722,lat=22.996667,popup="NCKU") %>%  
+ addMarkers(lng=120.223021,lat=23.005941,popup="廣越美食")%>% 
+ addMarkers(lng=120.220822,lat=22.992697,popup="肉肉控")%>% 
+ addMarkers(lng=120.221600,lat=22.993272,popup="布萊恩紅茶")
+m
+```
+
+#使用function重複執行，標示出三家店的所在位置
+```{r}
+m2 <- function(x,y,z){
+  w <- addMarkers(addTiles(leaflet()),lng=x,lat=y,popup=z)
+  return(w)
+}
+m2 (c(120.217964,120.217990,120.217995),c(22.994571,22.994828,22.995790),c("Subway","Louisa Coffee","cama cafe"))
+```
+
+*
+學習from主揚同學
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
